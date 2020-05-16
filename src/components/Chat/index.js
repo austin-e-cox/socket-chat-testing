@@ -7,6 +7,7 @@ import ChatWindow from "../ChatWindow"
 const socket = openSocket('http://localhost:8000');
 
 let connected = false;
+let reconnect_attempt = 0;
 
 
 class Chat extends React.Component {
@@ -16,7 +17,7 @@ class Chat extends React.Component {
     //   timestamp: 'no timestamp yet',
     // }
     this.state = {
-      activeUsers: [],
+      activeUsers: [this.props.userName],
       messageLog: [],
     };
   }
@@ -26,7 +27,7 @@ class Chat extends React.Component {
     if (this.state.activeUsers.length === 1) {
       message += "Flying solo for now.";
     } else {
-      message += "There are " + this.state.activeUsers + " participants";
+      message += "There are " + this.state.activeUsers.length + " participants";
     }
     return message;
   }
@@ -66,6 +67,9 @@ class Chat extends React.Component {
     // })
 
     // socket.emit('subscribeToTimer', 1000);
+
+    // tell server we are logging in
+    socket.emit('add user', this.props.userName);
 
     // set up all of the socket data receives and update the state
 
@@ -132,6 +136,7 @@ class Chat extends React.Component {
     socket.on('reconnect', (data) => {
       // pull last N messages and populate chat log (cannot just wait for new messages since we may have missed some)
       let message = 'you have been reconnected';
+      reconnect_attempt = 0;
       this.setState({...this.state, messageLog: [...this.state.messageLog, {userName: "", message: message}]})
       if (this.props.userName) {
         socket.emit('add user', this.props.userName);
@@ -140,7 +145,9 @@ class Chat extends React.Component {
   
     socket.on('reconnect_error', () => {
       let message = 'attempt to reconnect has failed';
-      this.setState({...this.state, messageLog: [...this.state.messageLog, {userName: "", message: message}]})
+      reconnect_attempt += 1;
+      if (reconnect_attempt<5)
+        this.setState({...this.state, messageLog: [...this.state.messageLog, {userName: "", message: message}]})
     });
 
   }
