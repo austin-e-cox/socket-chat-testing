@@ -1,26 +1,51 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+//import { subscribeToTimer } from './api';
+import Chat from "../src/components/Chat";
+import openSocket from 'socket.io-client';
+const socket = openSocket('http://localhost:8000');
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
+
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      timestamp: 'no timestamp yet'
+    };
+  }
+  
+  componentDidMount() {
+    socket.on('timer', (data) => {
+      //console.log(data)
+      this.setState({ 
+        timestamp: data 
+      });
+    })
+    socket.emit('subscribeToTimer', 1000);  
+  }
+
+  //groupName
+  //username
+  //userStatus
+  //userList
+  //userStatusList
+  //message
+  //messageLog
+  //userInput
+
+
+  render() {
+    return (
+      <div className="App">
+        <p className="App-intro">
+        {this.state.timestamp}
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+        <div>
+          <Chat userName={"UNSET_USER_"} groupName={"UNSET_GROUP_"}/>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default App;
